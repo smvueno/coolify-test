@@ -1,0 +1,11 @@
+---
+export interface Props {
+  class?: string;
+  padding?: 'sm' | 'md' | 'lg';
+}
+const { class: className = '', padding = 'md' } = Astro.props;
+const padClass = { sm: 'p-4', md: 'p-6', lg: 'p-8' }[padding];
+---
+<div class={`rounded-[var(--radius-lg)] border border-border bg-surface ${padClass} ${className}`}>
+  <slot />
+</div>

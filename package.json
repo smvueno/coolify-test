@@ -1,0 +1,20 @@
+{
+  "name": "harudigi-template",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/modules/*",
+    "packages/themes/*"
+  ],
+  "scripts": {
+    "dev:cms": "npm -w apps/cms run develop",
+    "dev:web": "npm -w apps/web run dev",
+    "build": "npm -w apps/web run build",
+    "seed": "npm -w apps/cms run seed"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

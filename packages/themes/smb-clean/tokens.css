@@ -1,0 +1,19 @@
+/* smb-clean theme — minimal, professional, small business friendly */
+:root {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #7c3aed;
+  --color-secondary-hover: #6d28d9;
+  --color-accent: #f59e0b;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f8fafc;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --font-heading: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --container-max: 1280px;
+  --container-padding: clamp(1rem, 5vw, 1.5rem);
+}

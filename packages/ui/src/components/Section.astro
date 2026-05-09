@@ -1,0 +1,30 @@
+---
+export interface Props {
+  tag?: 'section' | 'div';
+  class?: string;
+  background?: 'surface' | 'surface-alt' | 'primary' | 'none';
+  padding?: 'sm' | 'md' | 'lg' | 'xl' | 'none';
+}
+const {
+  tag: Tag = 'section',
+  class: className = '',
+  background = 'none',
+  padding = 'lg',
+} = Astro.props;
+const bgClass = {
+  surface: 'bg-surface',
+  'surface-alt': 'bg-surface-alt',
+  primary: 'bg-primary text-white',
+  none: '',
+}[background];
+const padClass = {
+  sm: 'py-8',
+  md: 'py-12',
+  lg: 'py-16',
+  xl: 'py-24',
+  none: '',
+}[padding];
+---
+<Tag class={`${bgClass} ${padClass} ${className}`}>
+  <slot />
+</Tag>

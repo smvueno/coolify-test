@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BlockRenderer from '../components/BlockRenderer.astro';
+import { getSite, getPage } from '../lib/strapi';
+
+export async function getStaticPaths() {
+  // For SSG, we need all paths. During dev, just handle whatever comes.
+  // In production build, this fetches all slugs from Strapi.
+  return [
+    { params: { slug: 'home' } },
+    { params: { slug: undefined } }, // root path
+  ];
+}
+
+const { slug } = Astro.params;
+const pageSlug = slug || 'home';
+
+const [site, page] = await Promise.all([
+  getSite(),
+  getPage(pageSlug),
+]);
+
+if (!page) {
+  return Astro.redirect('/404');
+}
+---
+
+<BaseLayout title={page.seoTitle || page.title} site={site}>
+  <BlockRenderer blocks={page.blocks} />
+</BaseLayout>

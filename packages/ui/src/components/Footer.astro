@@ -1,0 +1,23 @@
+---
+export interface Props {
+  siteName?: string;
+  class?: string;
+}
+const { siteName = 'Haru Digi', class: className = '' } = Astro.props;
+---
+<footer class={`border-t border-border bg-surface-alt ${className}`}>
+  <div class="mx-auto px-[var(--container-padding)] max-w-[var(--container-max)] py-12">
+    <div class="flex flex-col md:flex-row justify-between gap-8">
+      <div>
+        <p class="font-bold text-lg">{siteName}</p>
+        <p class="text-text-muted text-sm mt-1">Built with Astro + Strapi</p>
+      </div>
+      <div class="flex gap-6 text-sm text-text-muted">
+        <slot />
+      </div>
+    </div>
+    <div class="mt-8 pt-6 border-t border-border text-center text-sm text-text-muted">
+      &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
+    </div>
+  </div>
+</footer>

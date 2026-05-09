@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "galleries",
+  "info": {
+    "singularName": "gallery",
+    "pluralName": "galleries",
+    "displayName": "Gallery",
+    "description": "Image galleries"
+  },
+  "options": { "draftAndPublish": true },
+  "pluginOptions": {},
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "description": { "type": "text" },
+    "images": { "type": "media", "allowedTypes": ["images"], "multiple": true, "required": true },
+    "featured": { "type": "boolean", "default": false }
+  }
+}

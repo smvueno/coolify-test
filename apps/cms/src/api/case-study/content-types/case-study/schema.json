@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "case_studies",
+  "info": {
+    "singularName": "case-study",
+    "pluralName": "case-studies",
+    "displayName": "Case Study",
+    "description": "Client portfolio case studies"
+  },
+  "options": { "draftAndPublish": true },
+  "pluginOptions": {},
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "slug": { "type": "uid", "targetField": "title", "required": true },
+    "client": { "type": "string", "required": true },
+    "industry": { "type": "string" },
+    "challenge": { "type": "richtext" },
+    "solution": { "type": "richtext" },
+    "results": { "type": "richtext" },
+    "coverImage": { "type": "media", "allowedTypes": ["images"], "multiple": false },
+    "gallery": { "type": "media", "allowedTypes": ["images"], "multiple": true },
+    "testimonial": { "type": "relation", "relation": "oneToOne", "target": "api::testimonial.testimonial" },
+    "services": { "type": "relation", "relation": "manyToMany", "target": "api::service.service" },
+    "website": { "type": "string" },
+    "publishedAt": { "type": "datetime" }
+  }
+}

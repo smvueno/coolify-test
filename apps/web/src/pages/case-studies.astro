@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '@harudigi/ui/Container.astro';
+import { getCaseStudies, getSite } from '../lib/strapi';
+
+const site = await getSite();
+const studies = await getCaseStudies();
+
+function renderText(content: string | null): string {
+  if (!content) return '';
+  try { const p = JSON.parse(content); return p.children?.[0]?.children?.map((c: any) => c.text).join('') || ''; }
+  catch { return content; }
+}
+
+const industries = [...new Set(studies.map(s => s.industry).filter(Boolean))];
+---
+
+<BaseLayout title="Case Studies" site={site}>
+  <section class="py-12 md:py-16">
+    <Container>
+      <div class="text-center mb-12">
+        <h1 class="font-heading text-4xl font-bold">Case Studies</h1>
+        <p class="mt-3 text-text-muted text-lg max-w-2xl mx-auto">
+          Real results from real projects. See how we help businesses transform.
+        </p>
+      </div>
+
+      {industries.length > 0 && (
+        <div class="flex gap-2 mb-8 justify-center flex-wrap">
+          {industries.map(ind => (
+            <a href={`/case-studies#industry-${ind?.toLowerCase().replace(/\s+/g, '-')}`} class="text-xs font-semibold uppercase tracking-wider text-primary hover:underline bg-surface-alt px-3 py-1.5 rounded-full no-underline">
+              {ind}
+            </a>
+          ))}
+        </div>
+      )}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {studies.map(s => (
+          <article class="bg-surface border border-border rounded-[var(--radius-lg)] overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+            <div class="p-5">
+              <div class="flex items-start justify-between gap-2 mb-3">
+                {s.industry && (
+                  <span class="text-xs font-semibold text-primary uppercase tracking-wider">{s.industry}</span>
+                )}
+                {s.website && (
+                  <a href={s.website} target="_blank" rel="noopener noreferrer" class="text-xs text-text-muted hover:text-primary no-underline shrink-0">External link ↗</a>
+                )}
+              </div>
+              <h2 class="font-heading text-lg font-bold text-text leading-snug mb-1">{s.title}</h2>
+              <p class="text-sm text-text-muted mb-3">Client: {s.client}</p>
+              <p class="text-sm text-text leading-relaxed flex-1 line-clamp-3">{renderText(s.challenge)}</p>
+              <a href={`/case-studies/${s.slug}`} class="mt-4 inline-block text-sm font-semibold text-primary hover:underline no-underline">
+                Read case study &rarr;
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

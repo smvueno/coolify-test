@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.tmp/
+.strapi/
+.env
+.env.local
+.cache
+.DS_Store
+*.log
+apps/cms/.tmp
+apps/cms/dist
+apps/web/dist

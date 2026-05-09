@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '@harudigi/ui/Container.astro';
+import { getFaqs, getFaqCategories, getSite } from '../lib/strapi';
+
+const site = await getSite();
+const faqs = await getFaqs();
+const categories = await getFaqCategories();
+
+function renderAnswer(content: string): string {
+  try {
+    const parsed = JSON.parse(content);
+    return parsed.children?.map((n: any) => {
+      if (n.type === 'paragraph') {
+        return `<p class="mb-2">${n.children?.map((c: any) => c.text || '').join('') || ''}</p>`;
+      }
+      return '';
+    }).join('') || '';
+  } catch {
+    return content;
+  }
+}
+---
+
+<BaseLayout title="FAQ" site={site}>
+  <section class="py-12 md:py-16">
+    <Container size="narrow">
+      <div class="text-center mb-12">
+        <h1 class="font-heading text-4xl font-bold">Frequently Asked Questions</h1>
+        <p class="mt-3 text-text-muted text-lg">
+          Everything you need to know about our template and workflow.
+        </p>
+      </div>
+
+      {categories.length > 0 && (
+        <div class="flex gap-2 mb-8 justify-center flex-wrap">
+          {categories.map(cat => (
+            <a href={`#category-${cat?.toLowerCase().replace(/\s+/g, '-')}`} class="text-xs font-semibold uppercase tracking-wider text-primary hover:underline bg-surface-alt px-3 py-1.5 rounded-full no-underline">
+              {cat}
+            </a>
+          ))}
+        </div>
+      )}
+
+      {categories.map(cat => {
+        const catFaqs = faqs.filter(f => f.category === cat);
+        if (catFaqs.length === 0) return null;
+        return (
+          <div key={cat} class="mb-10" id={`category-${cat?.toLowerCase().replace(/\s+/g, '-')}`}>
+            <h2 class="font-heading text-2xl font-bold mb-4 text-primary">{cat}</h2>
+            <div class="space-y-3">
+              {catFaqs.map(faq => (
+                <details class="group bg-surface border border-border rounded-[var(--radius-lg)] overflow-hidden">
+                  <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-surface-alt transition-colors">
+                    <span class="font-semibold text-text pr-4">{faq.question}</span>
+                    <svg class="w-5 h-5 text-text-muted flex-shrink-0 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div class="p-4 pt-0 border-t border-border text-text-muted leading-relaxed text-sm" set:html={renderAnswer(faq.answer)}></div>
+                </details>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  details summary::-webkit-details-marker { display: none; }
+  details summary::marker { display: none; }
+  details[open] summary { border-bottom: 1px solid var(--color-border); }
+</style>

@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '@harudigi/ui/Container.astro';
+import { getServices, getSite } from '../lib/strapi';
+import type { StrapiService } from '@harudigi/types';
+
+const site = await getSite();
+const services = await getServices();
+
+const iconMap: Record<string, string> = {
+  code: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
+  zap: 'M13 10V3L4 14h7v7l9-11h-7z',
+  brain: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+  users: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z',
+};
+
+function parseFeatures(features: string | null): string[] {
+  if (!features) return [];
+  try { return JSON.parse(features); } catch { return []; }
+}
+---
+
+<BaseLayout title="Services" site={site}>
+  <section class="py-12 md:py-16">
+    <Container>
+      <div class="text-center mb-12">
+        <h1 class="font-heading text-4xl font-bold">Our Services</h1>
+        <p class="mt-3 text-text-muted text-lg max-w-2xl mx-auto">
+          Everything you need to build, automate, and scale your digital presence.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        {services.map(s => {
+          const features = parseFeatures(s.features);
+          const iconPath = iconMap[s.icon || ''] || iconMap.code;
+          return (
+            <article class="bg-surface border border-border rounded-[var(--radius-lg)] p-6 flex flex-col hover:shadow-md transition-shadow">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={iconPath} />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h2 class="font-heading text-xl font-bold text-text">{s.title}</h2>
+                  {s.price && (
+                    <span class="text-sm font-semibold text-primary">{s.price}</span>
+                  )}
+                </div>
+              </div>
+              <p class="mt-3 text-text-muted text-sm leading-relaxed">{s.description}</p>
+              {features.length > 0 && (
+                <ul class="mt-4 space-y-1.5">
+                  {features.map(f => (
+                    <li class="flex items-center gap-2 text-sm text-text-muted">
+                      <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div class="mt-auto pt-4">
+                <a href={`/services/${s.slug}`} class="text-sm font-semibold text-primary hover:underline no-underline">
+                  Learn more &rarr;
+                </a>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

@@ -1,0 +1,16 @@
+---
+export interface Props {
+  size?: 'default' | 'narrow' | 'wide' | 'full';
+  class?: string;
+}
+const { size = 'default', class: className = '' } = Astro.props;
+const widthClass = {
+  narrow: 'max-w-3xl',
+  default: 'max-w-[var(--container-max)]',
+  wide: 'max-w-6xl',
+  full: 'max-w-full',
+}[size];
+---
+<div class={`mx-auto px-[var(--container-padding)] ${widthClass} ${className}`}>
+  <slot />
+</div>

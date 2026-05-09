@@ -1,0 +1,68 @@
+---
+import '@harudigi/ui/tokens.css';
+import Header from '@harudigi/ui/Header.astro';
+import Footer from '@harudigi/ui/Footer.astro';
+import type { StrapiSite } from '@harudigi/types';
+import siteConfig from '../../site.config';
+
+interface Props {
+  title: string;
+  site?: StrapiSite | null;
+}
+
+const { title, site } = Astro.props;
+const siteName = site?.siteName || siteConfig.customer.name;
+const { blog } = siteConfig.modules;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title} | {siteName}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate" type="application/rss+xml" title="{siteName} Blog RSS" href="/blog/feed.xml" />
+</head>
+<body class="min-h-screen flex flex-col">
+  <Header siteName={siteName}>
+    <a href="/" class="text-text-muted hover:text-text text-sm no-underline">Home</a>
+    <a href="/case-studies" class="text-text-muted hover:text-text text-sm no-underline">Case Studies</a>
+    <a href="/services" class="text-text-muted hover:text-text text-sm no-underline">Services</a>
+    {blog && <a href="/blog" class="text-text-muted hover:text-text text-sm no-underline">Blog</a>}
+    <a href="/gallery" class="text-text-muted hover:text-text text-sm no-underline">Gallery</a>
+    <a href="/testimonials" class="text-text-muted hover:text-text text-sm no-underline">Testimonials</a>
+    <a href="/faq" class="text-text-muted hover:text-text text-sm no-underline">FAQ</a>
+    <a href="/contact" class="text-text-muted hover:text-text text-sm no-underline">Contact</a>
+  </Header>
+  <main class="flex-1">
+    <slot />
+  </main>
+  <Footer siteName={siteName} />
+
+  <script>
+    (function () {
+      const INTERVAL = 5 * 60 * 1000; // check every 5 minutes
+      const KEY = 'cf_deploy_version';
+
+      async function checkVersion() {
+        try {
+          const res = await fetch('/version.json?_=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return;
+          const { deployed } = await res.json();
+          const last = sessionStorage.getItem(KEY);
+          if (last && last !== deployed) {
+            window.location.reload();
+          }
+          sessionStorage.setItem(KEY, deployed);
+        } catch (_) {
+          // Silently ignore network errors
+        }
+      }
+
+      checkVersion();
+      setInterval(checkVersion, INTERVAL);
+    })();
+  </script>
+</body>
+</html>

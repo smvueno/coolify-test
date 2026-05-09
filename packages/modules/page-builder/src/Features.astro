@@ -1,0 +1,42 @@
+---
+import Container from '@harudigi/ui/Container.astro';
+import Card from '@harudigi/ui/Card.astro';
+import type { StrapiBlock } from '@harudigi/types';
+
+interface Props {
+  block: StrapiBlock;
+}
+const { block } = Astro.props;
+const { heading, subheading, features = [], layout = 'grid-3' } = block;
+
+const gridClass = {
+  'grid-2': 'grid-cols-1 md:grid-cols-2',
+  'grid-3': 'grid-cols-1 md:grid-cols-3',
+  'grid-4': 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+}[layout];
+---
+<section>
+  <Container>
+    {heading && (
+      <h2 class="font-heading text-3xl font-bold text-center">{heading}</h2>
+    )}
+    {subheading && (
+      <p class="mt-4 text-text-muted text-center max-w-2xl mx-auto">{subheading}</p>
+    )}
+    {features.length > 0 && (
+      <div class={`grid ${gridClass} gap-6 mt-12`}>
+        {features.map((feature: any) => (
+          <Card>
+            {feature.icon && (
+              <span class="text-3xl mb-3 block">{feature.icon}</span>
+            )}
+            <h3 class="font-heading font-semibold text-lg">{feature.title}</h3>
+            {feature.description && (
+              <p class="mt-2 text-text-muted">{feature.description}</p>
+            )}
+          </Card>
+        ))}
+      </div>
+    )}
+  </Container>
+</section>

@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BlogCard from '../../../components/BlogCard.astro';
+import BlogSidebar from '../../../components/BlogSidebar.astro';
+import Container from '@harudigi/ui/Container.astro';
+import { getBlogPostsByCategory, getCategories, getTags, getSite } from '../../../lib/strapi';
+
+export async function getStaticPaths() {
+  const categories = await getCategories();
+  return categories.map(cat => ({ params: { slug: cat.slug } }));
+}
+
+const { slug } = Astro.params;
+const pageNum = Number(Astro.url.searchParams.get('page')) || 1;
+const [site, { posts, total, pageCount }, categories, tags, allCategories] = await Promise.all([
+  getSite(),
+  getBlogPostsByCategory(slug!, pageNum, 9),
+  getCategories(),
+  getTags(),
+  getCategories(),
+]);
+
+const activeCat = allCategories.find(c => c.slug === slug);
+const title = activeCat ? `${activeCat.name} - Blog` : 'Blog';
+---
+
+<BaseLayout title={title} site={site}>
+  <section class="py-12 md:py-16">
+    <Container>
+      <div class="mb-10">
+        <a href="/blog" class="text-sm text-primary hover:underline no-underline">&larr; All Posts</a>
+        <h1 class="mt-2 font-heading text-3xl font-bold">{activeCat?.name || 'Category'}</h1>
+        {activeCat?.description && <p class="mt-1 text-text-muted">{activeCat.description}</p>}
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
+        <div>
+          {posts.length > 0 ? (
+            <>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {posts.map(post => <BlogCard post={post} />)}
+              </div>
+              {pageCount > 1 && (
+                <nav class="mt-10 flex justify-center gap-2">
+                  {pageNum > 1 && <a href={`/blog/category/${slug}?page=${pageNum - 1}`} class="px-4 py-2 border border-border rounded-md text-sm no-underline hover:bg-surface-alt">&larr; Previous</a>}
+                  <span class="px-4 py-2 text-sm text-text-muted">Page {pageNum} of {pageCount}</span>
+                  {pageNum < pageCount && <a href={`/blog/category/${slug}?page=${pageNum + 1}`} class="px-4 py-2 border border-border rounded-md text-sm no-underline hover:bg-surface-alt">Next &rarr;</a>}
+                </nav>
+              )}
+            </>
+          ) : <p class="text-text-muted text-center py-16">No posts in this category.</p>}
+        </div>
+        <BlogSidebar categories={categories} tags={tags} activeCategory={slug} />
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

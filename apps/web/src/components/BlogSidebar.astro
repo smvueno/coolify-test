@@ -1,0 +1,58 @@
+---
+import type { StrapiCategory, StrapiTag } from '@harudigi/types';
+
+interface Props {
+  categories: StrapiCategory[];
+  tags: StrapiTag[];
+  activeCategory?: string;
+  activeTag?: string;
+}
+
+const { categories, tags, activeCategory, activeTag } = Astro.props;
+---
+
+<aside class="space-y-8">
+  <!-- Categories -->
+  {categories.length > 0 && (
+    <div>
+      <h3 class="font-heading font-bold text-sm uppercase tracking-wider text-text-muted mb-3">Categories</h3>
+      <ul class="space-y-1.5">
+        {categories.map(cat => (
+          <li>
+            <a
+              href={`/blog/category/${cat.slug}`}
+              class={`block px-3 py-2 rounded-md text-sm no-underline transition-colors ${
+                activeCategory === cat.slug
+                  ? 'bg-primary text-white font-medium'
+                  : 'text-text-muted hover:bg-surface-alt hover:text-text'
+              }`}
+            >
+              {cat.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  <!-- Tags -->
+  {tags.length > 0 && (
+    <div>
+      <h3 class="font-heading font-bold text-sm uppercase tracking-wider text-text-muted mb-3">Tags</h3>
+      <div class="flex flex-wrap gap-2">
+        {tags.map(tag => (
+          <a
+            href={`/blog/tag/${tag.slug}`}
+            class={`px-3 py-1 rounded-full text-xs no-underline transition-colors ${
+              activeTag === tag.slug
+                ? 'bg-primary text-white'
+                : 'bg-surface-alt text-text-muted hover:bg-border hover:text-text'
+            }`}
+          >
+            #{tag.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+</aside>

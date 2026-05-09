@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*.js", "config/**/*.js", "seed.js"],
+  "exclude": ["node_modules", "dist", ".tmp"]
+}

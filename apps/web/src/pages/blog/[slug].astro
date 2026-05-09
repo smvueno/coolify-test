@@ -1,0 +1,146 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Container from '@harudigi/ui/Container.astro';
+import { getBlogPost, getSite, getCategories, getTags, getAllBlogSlugs } from '../../lib/strapi';
+import BlogSidebar from '../../components/BlogSidebar.astro';
+import type { StrapiBlogPost } from '@harudigi/types';
+
+export async function getStaticPaths() {
+  const slugs = await getAllBlogSlugs();
+  return slugs.length > 0
+    ? slugs.map(s => ({ params: { slug: s } }))
+    : [{ params: { slug: 'getting-started-astro-strapi' } }];
+}
+
+const { slug } = Astro.params;
+const [site, post, categories, tags] = await Promise.all([
+  getSite(),
+  getBlogPost(slug!),
+  getCategories(),
+  getTags(),
+]);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+const date = new Date(post.publishedAt).toLocaleDateString('en-US', {
+  year: 'numeric', month: 'long', day: 'numeric',
+});
+
+// Parse rich text content
+let richContent: any[] = [];
+try {
+  const parsed = JSON.parse(post.content);
+  richContent = parsed.children || [];
+} catch {
+  richContent = [];
+}
+
+// Render rich text inline nodes to HTML string (used during static build)
+function renderInline(nodes: any[] | undefined): string {
+  if (!nodes) return '';
+  return nodes.map((n: any) => {
+    if (n.type === 'text') return n.text || '';
+    if (n.type === 'link') return `<a href="${n.url}" class="text-primary underline">${renderInline(n.children)}</a>`;
+    if (n.type === 'bold' || n.bold) return `<strong>${renderInline(n.children || [n])}</strong>`;
+    if (n.type === 'italic' || n.italic) return `<em>${renderInline(n.children || [n])}</em>`;
+    if (n.type === 'code') return `<code class="bg-surface-alt px-1.5 py-0.5 rounded text-sm">${renderInline(n.children || [n])}</code>`;
+    return renderInline(n.children || []);
+  }).join('');
+}
+
+// Render full rich text structure to HTML string
+function renderContentHtml(nodes: any[]): string {
+  return nodes.map((node: any) => {
+    if (node.type === 'heading') {
+      const level = node.level || 2;
+      const sizeClasses = ['', 'text-3xl md:text-4xl font-bold mt-10 mb-4', 'text-2xl md:text-3xl font-bold mt-8 mb-3', 'text-xl md:text-2xl font-semibold mt-6 mb-2', 'text-lg font-semibold mt-4 mb-2'];
+      return `<h${level} class="${sizeClasses[level] || sizeClasses[4]}">${renderInline(node.children)}</h${level}>`;
+    }
+    if (node.type === 'paragraph') {
+      return `<p class="mb-4 leading-relaxed text-text">${renderInline(node.children)}</p>`;
+    }
+    if (node.type === 'list') {
+      const tag = node.format === 'ordered' ? 'ol' : 'ul';
+      const cls = `mb-4 pl-5 space-y-1.5 ${node.format === 'ordered' ? 'list-decimal' : 'list-disc'}`;
+      const items = (node.children || []).map((item: any) =>
+        `<li class="text-text leading-relaxed">${renderInline(item.children)}</li>`
+      ).join('');
+      return `<${tag} class="${cls}">${items}</${tag}>`;
+    }
+    if (node.type === 'code') {
+      return `<pre class="bg-surface-alt border border-border rounded-lg p-4 mb-4 overflow-x-auto text-sm"><code>${renderInline(node.children)}</code></pre>`;
+    }
+    if (node.type === 'quote' || node.type === 'blockquote') {
+      return `<blockquote class="border-l-3 border-primary pl-4 my-6 text-text-muted italic">${renderInline(node.children)}</blockquote>`;
+    }
+    if (node.type === 'image') {
+      return `<img src="${node.url}" alt="${node.alt || ''}" class="rounded-lg my-8 max-w-full h-auto" />`;
+    }
+    return '';
+  }).join('\n');
+}
+
+const contentHtml = renderContentHtml(richContent);
+
+const headlineSize = (level: number) => {
+  switch (level) {
+    case 1: return 'text-3xl md:text-4xl font-bold mt-10 mb-4';
+    case 2: return 'text-2xl md:text-3xl font-bold mt-8 mb-3';
+    case 3: return 'text-xl md:text-2xl font-semibold mt-6 mb-2';
+    default: return 'text-lg font-semibold mt-4 mb-2';
+  }
+};
+---
+
+<BaseLayout title={post.seoTitle || post.title} site={site}>
+  <article class="py-8 md:py-12">
+    <Container size="narrow">
+      <!-- Header -->
+      <header class="mb-10">
+        {post.category && (
+          <a href={`/blog/category/${post.category.slug}`} class="text-xs font-semibold text-primary uppercase tracking-wider hover:underline">
+            {post.category.name}
+          </a>
+        )}
+        <h1 class="mt-2 font-heading text-3xl md:text-5xl font-bold tracking-tight leading-tight">
+          {post.title}
+        </h1>
+        {post.excerpt && (
+          <p class="mt-3 text-lg text-text-muted">{post.excerpt}</p>
+        )}
+        <div class="mt-4 flex items-center gap-3 text-sm text-text-muted">
+          {post.author && <span>By {post.author.name}</span>}
+          <span>&middot;</span>
+          <time datetime={post.publishedAt}>{date}</time>
+        </div>
+        {post.tags && post.tags.length > 0 && (
+          <div class="mt-4 flex gap-2 flex-wrap">
+            {post.tags.map(tag => (
+              <a href={`/blog/tag/${tag.slug}`} class="bg-surface-alt text-text-muted px-3 py-1 rounded-full text-xs no-underline hover:bg-border transition-colors">
+                #{tag.name}
+              </a>
+            ))}
+          </div>
+        )}
+      </header>
+
+      <!-- Content -->
+      <div class="prose-content" set:html={contentHtml}></div>
+
+      <!-- Back link -->
+      <div class="mt-12 pt-8 border-t border-border">
+        <a href="/blog" class="text-primary hover:underline no-underline text-sm">&larr; Back to Blog</a>
+      </div>
+    </Container>
+  </article>
+</BaseLayout>
+
+<style>
+  .prose-content a { color: var(--color-primary); text-decoration: underline; }
+  .prose-content a:hover { color: var(--color-primary-hover); }
+  .prose-content code { background: var(--color-surface-alt); padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875em; }
+  .prose-content pre code { background: none; padding: 0; }
+  .prose-content img { max-width: 100%; height: auto; border-radius: var(--radius-lg); margin: 1.5rem 0; }
+</style>

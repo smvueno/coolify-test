@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import BlogSidebar from '../../components/BlogSidebar.astro';
+import Container from '@harudigi/ui/Container.astro';
+import { getBlogPosts, getCategories, getTags, getSite } from '../../lib/strapi';
+
+const pageNum = Number(Astro.url.searchParams.get('page')) || 1;
+const [site, { posts, total, pageCount }, categories, tags] = await Promise.all([
+  getSite(),
+  getBlogPosts(pageNum, 9),
+  getCategories(),
+  getTags(),
+]);
+---
+
+<BaseLayout title="Blog" site={site}>
+  <section class="py-12 md:py-16">
+    <Container>
+      <div class="mb-10">
+        <h1 class="font-heading text-4xl font-bold">Blog</h1>
+        <p class="mt-2 text-text-muted">Insights, tutorials, and updates from the team</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
+        <!-- Main content -->
+        <div>
+          {posts.length > 0 ? (
+            <>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {posts.map(post => <BlogCard post={post} />)}
+              </div>
+
+              <!-- Pagination -->
+              {pageCount > 1 && (
+                <nav class="mt-10 flex justify-center gap-2">
+                  {pageNum > 1 && (
+                    <a href={`/blog?page=${pageNum - 1}`} class="px-4 py-2 border border-border rounded-md text-sm no-underline hover:bg-surface-alt">
+                      &larr; Previous
+                    </a>
+                  )}
+                  <span class="px-4 py-2 text-sm text-text-muted">
+                    Page {pageNum} of {pageCount}
+                  </span>
+                  {pageNum < pageCount && (
+                    <a href={`/blog?page=${pageNum + 1}`} class="px-4 py-2 border border-border rounded-md text-sm no-underline hover:bg-surface-alt">
+                      Next &rarr;
+                    </a>
+                  )}
+                </nav>
+              )}
+            </>
+          ) : (
+            <p class="text-text-muted text-center py-16">No posts yet. Check back soon!</p>
+          )}
+        </div>
+
+        <!-- Sidebar -->
+        <BlogSidebar categories={categories} tags={tags} />
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

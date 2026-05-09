@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_blocks_rich_texts",
+  "info": {
+    "displayName": "Rich Text",
+    "description": "Rich text content block"
+  },
+  "options": {},
+  "attributes": {
+    "content": {
+      "type": "richtext",
+      "required": true
+    },
+    "maxWidth": {
+      "type": "enumeration",
+      "enum": ["narrow", "default", "wide", "full"],
+      "default": "default"
+    }
+  }
+}

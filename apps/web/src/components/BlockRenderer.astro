@@ -1,0 +1,30 @@
+---
+import Hero from '@harudigi/modules-page-builder/Hero.astro';
+import Features from '@harudigi/modules-page-builder/Features.astro';
+import CTA from '@harudigi/modules-page-builder/CTA.astro';
+import RichText from '@harudigi/modules-page-builder/RichText.astro';
+import type { StrapiBlock } from '@harudigi/types';
+
+interface Props {
+  blocks: StrapiBlock[];
+}
+
+const componentMap: Record<string, any> = {
+  'blocks.hero': Hero,
+  'blocks.features': Features,
+  'blocks.cta': CTA,
+  'blocks.rich-text': RichText,
+};
+
+const { blocks } = Astro.props;
+---
+
+{
+  blocks.map((block) => {
+    const Component = componentMap[block.__component];
+    if (!Component) {
+      return <p class="text-text-muted text-center py-8">Unknown block: {block.__component}</p>;
+    }
+    return <Component block={block} />;
+  })
+}

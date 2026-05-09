@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_blocks_features",
+  "info": {
+    "displayName": "Features",
+    "description": "Features grid section with icon cards"
+  },
+  "options": {},
+  "attributes": {
+    "heading": {
+      "type": "string"
+    },
+    "subheading": {
+      "type": "text"
+    },
+    "features": {
+      "type": "component",
+      "component": "shared.feature-item",
+      "repeatable": true,
+      "required": true,
+      "min": 1,
+      "max": 12
+    },
+    "layout": {
+      "type": "enumeration",
+      "enum": ["grid-2", "grid-3", "grid-4"],
+      "default": "grid-3"
+    }
+  }
+}

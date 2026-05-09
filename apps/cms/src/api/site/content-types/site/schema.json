@@ -1,0 +1,76 @@
+{
+  "kind": "singleType",
+  "collectionName": "sites",
+  "info": {
+    "singularName": "site",
+    "pluralName": "sites",
+    "displayName": "Site",
+    "description": "Global site settings singleton"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "siteName": {
+      "type": "string",
+      "required": true,
+      "default": "My Site"
+    },
+    "tagline": {
+      "type": "text"
+    },
+    "logo": {
+      "type": "media",
+      "allowedTypes": ["images"]
+    },
+    "favicon": {
+      "type": "media",
+      "allowedTypes": ["images"]
+    },
+    "primaryColor": {
+      "type": "string",
+      "default": "#2563eb"
+    },
+    "secondaryColor": {
+      "type": "string",
+      "default": "#7c3aed"
+    },
+    "contactEmail": {
+      "type": "email"
+    },
+    "contactPhone": {
+      "type": "string"
+    },
+    "enabledModules": {
+      "type": "json",
+      "default": {
+        "pageBuilder": true,
+        "blog": false,
+        "forms": true,
+        "booking": false,
+        "portfolio": false,
+        "teamTestimonials": false
+      }
+    },
+    "seoTitleTemplate": {
+      "type": "string",
+      "default": "{{title}} | {{siteName}}"
+    },
+    "seoDescription": {
+      "type": "text"
+    },
+    "ogImage": {
+      "type": "media",
+      "allowedTypes": ["images"]
+    },
+    "socialLinks": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

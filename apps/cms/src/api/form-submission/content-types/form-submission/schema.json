@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "form_submissions",
+  "info": {
+    "singularName": "form-submission",
+    "pluralName": "form-submissions",
+    "displayName": "Form Submission",
+    "description": "Contact form submissions"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "formKey": {
+      "type": "string",
+      "required": true,
+      "default": "contact"
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "message": {
+      "type": "text",
+      "required": true
+    },
+    "phone": {
+      "type": "string"
+    },
+    "sourcePage": {
+      "type": "string"
+    },
+    "submittedAt": {
+      "type": "datetime",
+      "required": true,
+      "default": "NOW"
+    }
+  }
+}
