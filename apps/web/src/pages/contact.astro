@@ -67,14 +67,18 @@ const site = await getSite();
     const formData = new FormData(form);
     
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch('/api/form-submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.get('name'),
-          email: formData.get('email'),
-          phone: formData.get('phone') || '',
-          message: formData.get('message'),
+          data: {
+            formKey: 'contact',
+            submittedAt: new Date().toISOString(),
+            name: formData.get('name'),
+            email: formData.get('email'),
+            phone: formData.get('phone') || '',
+            message: formData.get('message'),
+          },
         }),
       });
 

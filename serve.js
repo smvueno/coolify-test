@@ -1,8 +1,10 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const DIST = '/root/projects/coolify-test/apps/web/dist';
+const PROJECT_ROOT = '/root/projects/coolify-test';
 const STRAPI_UPSTREAM = { hostname: 'localhost', port: 1337 };
 const PORT = 4321;
 
@@ -13,8 +15,46 @@ const MIME = {
   '.woff2': 'font/woff2', '.xml': 'application/xml',
 };
 
+// ── Load _headers rules ────────────────────────────────────────────
+const HEADERS_FILE = path.join(DIST, '_headers');
+let headersRules = [];
+function loadHeaders() {
+  headersRules = [];
+  if (!fs.existsSync(HEADERS_FILE)) return;
+  const content = fs.readFileSync(HEADERS_FILE, 'utf8');
+  let currentPath = null;
+  let currentHeaders = [];
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (trimmed.startsWith('/')) {
+      if (currentPath) headersRules.push({ path: currentPath, headers: currentHeaders });
+      currentPath = trimmed.replace(/\s*#.*$/, '').trim();
+      currentHeaders = [];
+    } else if (trimmed.includes(':')) {
+      const [key, ...vals] = trimmed.split(':');
+      currentHeaders.push({ key: key.trim(), value: vals.join(':').trim() });
+    }
+  }
+  if (currentPath) headersRules.push({ path: currentPath, headers: currentHeaders });
+}
+loadHeaders();
+
+function matchHeaders(urlPath) {
+  const matched = [];
+  for (const rule of headersRules) {
+    // Convert glob pattern to regex (e.g. /_astro/* → ^/_astro/.*$)
+    const pattern = '^' + rule.path.replace(/\*/g, '.*') + '$';
+    if (new RegExp(pattern, 'i').test(urlPath)) {
+      matched.push(...rule.headers);
+      break; // First match wins (Cloudflare _headers semantics)
+    }
+  }
+  return matched;
+}
+
+// ── Proxy to Strapi ────────────────────────────────────────────────
 function proxyRequest(req, res) {
-  // Stream the request to Strapi upstream
   const options = {
     hostname: STRAPI_UPSTREAM.hostname,
     port: STRAPI_UPSTREAM.port,
@@ -22,13 +62,10 @@ function proxyRequest(req, res) {
     method: req.method,
     headers: { ...req.headers },
   };
-  // Strip host header so Strapi sees localhost
   delete options.headers.host;
 
   const proxyReq = http.request(options, (proxyRes) => {
-    // Forward status, headers, and body as a stream
     const responseHeaders = { ...proxyRes.headers };
-    // Override Content-Type to ensure JSON (Strapi API always returns JSON)
     res.writeHead(proxyRes.statusCode, responseHeaders);
     proxyRes.pipe(res);
   });
@@ -39,33 +76,55 @@ function proxyRequest(req, res) {
     res.end(JSON.stringify({ error: 'Upstream unavailable' }));
   });
 
-  // Pipe the incoming request body to the upstream
   req.pipe(proxyReq);
 }
 
+// ── Rebuild on Strapi webhook ──────────────────────────────────────
+function triggerRebuild(res) {
+  console.log(`[${new Date().toISOString()}] Rebuild triggered by Strapi webhook...`);
+  try {
+    const env = { ...process.env, STRAPI_URL: 'http://localhost:1337' };
+    const out = execSync('npm run build', { cwd: PROJECT_ROOT, env, timeout: 120000, maxBuffer: 10 * 1024 * 1024 });
+    console.log(out.toString().split('\n').slice(-3).join('\n'));
+    loadHeaders(); // Reload _headers after rebuild
+    console.log(`[${new Date().toISOString()}] Rebuild complete`);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true }));
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] Rebuild failed:`, err.message);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+// ── Server ─────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
-  // ── API proxy: /api/* → Strapi (all methods: GET, POST, PUT, DELETE, etc.) ──
+  // ── Rebuild webhook (accept from Strapi) ──
+  if (req.url === '/__webhook/rebuild' && req.method === 'POST') {
+    // Accept any POST — no auth needed for local dev
+    return triggerRebuild(res);
+  }
+
+  // ── API proxy: /api/* → Strapi (all methods) ──
   if (req.url.startsWith('/api/')) {
     return proxyRequest(req, res);
   }
 
-  // ── CORS (for any non-API route) ──
+  // ── CORS ──
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  // ── Serve static files ──
+  // ── Determine file path ──
   let filePath;
-
   if (req.url === '/') {
     filePath = path.join(DIST, 'index.html');
   } else {
     filePath = path.join(DIST, req.url);
-    // If URL points to a directory, serve index.html inside it
     if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
       filePath = path.join(filePath, 'index.html');
     }
   }
 
-  // SPA fallback for truly unknown routes
+  // SPA fallback
   if (!fs.existsSync(filePath)) {
     filePath = path.join(DIST, 'index.html');
   }
@@ -73,16 +132,38 @@ const server = http.createServer((req, res) => {
   const ext = path.extname(filePath);
   const contentType = MIME[ext] || 'application/octet-stream';
 
+  // ── Apply _headers rules + standard cache ──
+  const responseHeaders = { 'Content-Type': contentType };
+  const matched = matchHeaders(req.url);
+  for (const h of matched) {
+    responseHeaders[h.key] = h.value;
+  }
+
+  // Default cache for hashed Astro assets
+  if (req.url.startsWith('/_astro/') && !responseHeaders['Cache-Control']) {
+    responseHeaders['Cache-Control'] = 'public, max-age=31536000, immutable';
+  }
+
   fs.readFile(filePath, (err, content) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       return res.end('404 Not Found');
     }
-    res.writeHead(200, { 'Content-Type': contentType });
+    const head = Object.keys(responseHeaders).map(k => `${k}: ${responseHeaders[k]}`).join('\n  ');
+    res.writeHead(200, responseHeaders);
     res.end(content);
   });
 });
 
+// ── Watch for dist/ changes (hot rebuild from webhook) ──
+fs.watchFile(HEADERS_FILE, { interval: 2000 }, () => {
+  loadHeaders();
+  console.log('_headers reloaded');
+});
+
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`\n  Haru Digi local server`);
+  console.log(`  Site:      http://localhost:${PORT}`);
+  console.log(`  API proxy: /api/* → Strapi at localhost:1337`);
+  console.log(`  Rebuild:   POST /__webhook/rebuild\n`);
 });
