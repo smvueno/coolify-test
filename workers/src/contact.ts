@@ -19,14 +19,17 @@ export async function handleContact(request: Request, env: Env, origin: string):
   const body = await request.json() as Record<string, string>;
   const { name, email, message, turnstileToken } = body;
 
-  if (!name || !email || !message || !turnstileToken) {
+  if (!name || !email || !message) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers });
   }
 
-  const ip = request.headers.get('CF-Connecting-IP') ?? '';
-  const valid = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, ip);
-  if (!valid) {
-    return new Response(JSON.stringify({ error: 'Invalid captcha' }), { status: 400, headers });
+  // Verify Turnstile if token provided (optional until frontend widget is added)
+  if (turnstileToken) {
+    const ip = request.headers.get('CF-Connecting-IP') ?? '';
+    const valid = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, ip);
+    if (!valid) {
+      return new Response(JSON.stringify({ error: 'Invalid captcha' }), { status: 400, headers });
+    }
   }
 
   // Send email via Resend API

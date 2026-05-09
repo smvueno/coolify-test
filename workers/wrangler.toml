@@ -10,5 +10,8 @@ id = "99859bb8d77c4cad8997792beed0570f"
 [vars]
 
 # Secrets (set via: wrangler secret put)
-# TURNSTILE_SECRET_KEY
-# RESEND_API_KEY
+# Required secrets:
+#   TURNSTILE_SECRET_KEY     — Cloudflare Turnstile secret
+#   RESEND_API_KEY           — Resend API key for contact email
+#   GOOGLE_SERVICE_ACCOUNT_JSON  — Full JSON of Google service account
+#   GOOGLE_CALENDAR_ID       — Google Calendar ID (email format)
