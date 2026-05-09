@@ -203,30 +203,4 @@ export async function getGalleries(featured?: boolean): Promise<StrapiGallery[]>
   return Array.isArray(data) ? data : [];
 }
 
-// ── Form Submission ──────────────────────────────────────────────
-
-export async function submitContactForm(data: {
-  name: string;
-  email: string;
-  message: string;
-  phone?: string;
-  sourcePage?: string;
-}): Promise<boolean> {
-  try {
-    const res = await fetch(`${STRAPI_URL}/api/form-submissions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: {
-          formKey: 'contact',
-          submittedAt: new Date().toISOString(),
-          ...data,
-        },
-      }),
-    });
-    return res.ok;
-  } catch (e) {
-    console.error('Form submission error:', e);
-    return false;
-  }
-}
+// ── Form Submission — unused, POSTs go through Worker /api/contact ──

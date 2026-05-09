@@ -56,7 +56,6 @@ const site = await getSite();
 <script>
   const form = document.getElementById('contact-form');
   const status = document.getElementById('form-status');
-  const STRAPI_URL = '';
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -68,18 +67,14 @@ const site = await getSite();
     const formData = new FormData(form);
     
     try {
-      const res = await fetch(`${STRAPI_URL}/api/form-submissions`, {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          data: {
-            formKey: 'contact',
-            submittedAt: new Date().toISOString(),
-            name: formData.get('name'),
-            email: formData.get('email'),
-            phone: formData.get('phone') || '',
-            message: formData.get('message'),
-          },
+          name: formData.get('name'),
+          email: formData.get('email'),
+          phone: formData.get('phone') || '',
+          message: formData.get('message'),
         }),
       });
 
@@ -88,7 +83,8 @@ const site = await getSite();
         status!.className = 'text-sm text-green-600';
         form.reset();
       } else {
-        status!.textContent = 'Something went wrong. Please try again or email us directly.';
+        const err = await res.json().catch(() => ({}));
+        status!.textContent = err.error || 'Something went wrong. Please try again or email us directly.';
         status!.className = 'text-sm text-red-500';
       }
     } catch {
